@@ -1,0 +1,7 @@
+---
+- name: set yum.conf
+  lineinfile: >
+    dest=/etc/yum.conf
+    state=present
+    regexp='#? ?keepcache'
+    line='keepcache=1'

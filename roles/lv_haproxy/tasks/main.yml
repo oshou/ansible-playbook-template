@@ -1,0 +1,14 @@
+---
+- name: set kernel paramter
+
+- name: create log directory
+
+- name: create data direcory
+
+- name: install haproxy
+  yum: name=haproxy state=installed
+
+- name: set config.file
+
+- name: service start & enabled
+  service: name=mysqld state=started enabled=yes

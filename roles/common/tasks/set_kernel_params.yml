@@ -1,0 +1,26 @@
+---
+- name: set kernel params ( NetOptimaization & protect SYN Flood, Smurf, IPaddress Spoofing, Logfull)
+  ignore_errors: True
+  sysctl: >
+    name="{{item.name}}"
+    value="{{item.value}}"
+    sysctl_set=yes
+  with_items:
+    # For net optimaization
+    - {name: 'net.core.somaxconn', value: 16384}
+    - {name: 'net.core.netdev_max_backlog', value: 16384}
+    - {name: 'net.ipv4.tcp_max_syn_backlog', value: 16384}
+    # For quick recycle TCP_WAIT
+    - {name: 'net.ipv4.tcp_tw_reuse', value: 1}
+    - {name: 'net.ipv4.tcp_tw_recycle', value: 1}
+    # For SYN Flood Attack
+    - {name: 'net.ipv4.tcp_syncookies', value: 1}
+    # For Smurf Attack
+    - {name: 'net.ipv4.icmp_echo_ignore_broadcasts', value: 1}
+    # For IPaddress Spoofing
+    - {name: 'net.ipv4.conf.default.rp_filter', value: 1}
+    - {name: 'net.ipv4.conf.all.rp_filter', value: 1}
+    # For Logfull Attack (disallow logging for icmp error messages)
+    - {name: 'net.ipv4.icmp_ignore_bogus_error_responses', value: 1}
+    # For NAT
+    - {name: 'net.ipv4.tcp_timestamps', value: 0 }

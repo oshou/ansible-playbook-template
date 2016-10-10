@@ -1,0 +1,6 @@
+.git/
+group_vars/
+host_vars/
+hosts
+README.md
+site.retry

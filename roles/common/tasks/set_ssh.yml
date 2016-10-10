@@ -1,0 +1,26 @@
+---
+- name: set sshd
+  lineinfile:
+    dest=/etc/ssh/sshd_config
+    state=present
+    regexp='{{item.regexp}}'
+    line='{{item.line}}'
+  with_items:
+    - {regexp: '^#? ?Port ', line: 'Port {{common_ssh_port}}'}
+    - {regexp: '^#? ?Protocol ', line: 'Protocol 2'}
+    - {regexp: '^#? ?PermitRootLogin ', line: 'PermitRootLogin no'}
+    - {regexp: '^#? ?PermitEmptyPasswords ', line: 'PermitEmptyPasswords no'}
+  notify: restart_sshd
+
+  # - name: set publickey authentication
+  #   lineinfile:
+  #     dest=/etc/ssh/sshd_config
+  #     state=present
+  #     regexp='{{item.regexp}}'
+  #     line='{{item.line}}'
+  #   with_items:
+  #     - {regexp: '^#? ?PubkeyAuthentication ', line: 'PubkeyAuthentication yes'}
+  #     - {regexp: '^#? ?PasswordAuthentication ', line: 'PasswordAuthentication no'}
+  #     - {regexp: '^#? ?ChallengeResponseAuthentication ', line: 'ChallengeResponseAuthentication no'}
+  #     - {regexp: '^#? ?GSSAPIAuthentication ', line: 'GSSAPIAuthentication no'}
+  #   notify: restart_sshd

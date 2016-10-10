@@ -1,0 +1,57 @@
+require 'spec_helper'
+
+# Check hostname
+describe command('hostname') do
+  its(:stdout) { should match "#{:server_id}" }
+end
+
+# Check NIC speed(1Gb/s-)
+# Check Repository Setting
+# Check Timezone
+# Check Sudoers
+# Check route setting
+# Check VLAN ID setting
+# Check bonding setting
+# Check kernel paramter
+# Check Localization(L10n)
+# Check Internationalization(i18n)
+# Check DNS Resolution
+# Check ulimit setting
+
+# Check port status OK
+property[:port].each do |t|
+%w{80 10022 445 21 25 123}.each do |t|
+  describe port(t) do
+    it { should be_listening }
+  end
+end
+
+
+# Check Timezone
+describe command('strings /etc/localtime') do
+  its(:stdout) { should match '/JST-9/'}
+end
+describe file('/etc/sysconfig/clock') do
+  its(:command) { should match(/ZONE=\"Asia\/Tokyo\"/) }
+end
+
+# Check selinux disable
+describe selinux do
+  it { should be_disabled }
+end
+
+# Check install package
+%w{nkf denyhosts logwatch dstat sysstat stress}.each do |t|
+  describe package(t) do
+    it {should be_installed}
+  end
+end
+
+# Check service autostart setting & now running
+%w{mysqld iptables postfix php-fpm sshd ntpd nginx}.each do |t|
+  describe service(t) do
+    it { should be_enabled }
+    it { should be_running }
+  end
+end
+

@@ -1,0 +1,7 @@
+---
+- name: set logrotate.conf
+  lineinfile: >
+    dest=/etc/logrotate.conf
+    state=present
+    regexp='^#? ?rotate'
+    line='rotate {{common_logrotate_weeks}}'

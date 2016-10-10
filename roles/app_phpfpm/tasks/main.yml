@@ -1,0 +1,25 @@
+---
+- name: enable remi repository.
+  yum: >
+    name="http://rpms.famillecollet.com/enterprise/remi-release-6.rpm"
+    state=present
+
+- name: install php packages.
+  yum: >
+    name={{item}}
+    state=present
+    enablerepo={{phpfpm_enablerepo}}
+  with_items: "{{phpfpm_packages}}"
+
+- name: set php-fpm.conf
+  template: >
+    src=php-fpm.conf
+    dest="{{phpfpm_config_file}}"
+    owner=root
+    group=root
+    mode=0644
+  notify: restart_nginx
+
+- name: service php-fpm start & enabled
+  service: name=php-fpm state=started enabled=yes
+
