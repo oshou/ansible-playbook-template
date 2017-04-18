@@ -165,7 +165,7 @@ iptables -A PING_OF_DEATH -p icmp --icmp-type echo-request \
     -j RETURN
 iptables -A PING_OF_DEATH -j LOG --log-prefix "ping_of_death_attack: "
 iptables -A PING_OF_DEATH -j DROP
-iptables -A INPUT -p icmp --icmp-type echo-request
+iptables -A INPUT -p icmp --icmp-type echo-request -j PING_OF_DEATH
 
 
 ##################################################################################
