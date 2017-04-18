@@ -7,24 +7,27 @@ PATH=/sbin:/usr/sbin:/bin:/usr/bin
 # (要定義)IP定義
 ######################################################
 
+# 全てのIPを表す設定を定義
+ANY="0.0.0.0/0"
+
 # 内部ネットワークとして許可する範囲
+# **必要に応じてアンコメントアウト**
 # LOCAL_NET="xxx.xxx.xxx.xxx/xx"
 
-# 全てのIPを表す設定を定義
-#ANY="0.0.0.0/0"
-
 # 信頼可能ホスト(配列) 監視サーバIP等を記載
-#ALLOW_HOSTS=(
+# **必要に応じてアンコメントアウト**
+# ALLOW_HOSTS=(
 #  "xxx.xxx.xxx.xxx"
 #  "xxx.xxx.xxx.xxx"
 #  "xxx.xxx.xxx.xxx"
-#)
+# )
 # 無条件破棄するホスト(配列)
-#DENY_HOSTS=(
+# **必要に応じてアンコメントアウト**
+# DENY_HOSTS=(
 #  "xxx.xxx.xxx.xxx"
 #  "xxx.xxx.xxx.xxx"
 #  "xxx.xxx.xxx.xxx"
-#)
+# )
 
 
 ######################################################
@@ -243,32 +246,35 @@ iptables -A INPUT -d 224.0.0.1 -j DROP
 
 
 ##################################################################################
-# 全ホストからの入力許可
+# 全ホストからの入力許可 ( ANY -> SELF )
 ##################################################################################
 
 # ICMP
-iptables -A INPUT -p icmp -j ACCEPT # ANY -> SELF
+iptables -A INPUT -p icmp -j ACCEPT
 
 # HTTP,HTTPS
+# **必要に応じてアンコメントアウト**
 iptables -A INPUT -p tcp -m multiport --dports $HTTP -j ACCEPT
 
-# HTTP,HTTPS
-iptables -A INPUT -p tcp -m multiport --dports $SSH -j ACCEPT
+# SSH
+# **必要に応じてアンコメントアウト**
+# iptables -A INPUT -p tcp -m multiport --dports $SSH -j ACCEPT
 
 # DNS
-iptables -A INPUT -p tcp -m multiport --dports $DNS -j ACCEPT
+# **必要に応じてアンコメントアウト**
+# iptables -A INPUT -p tcp -m multiport --dports $DNS -j ACCEPT
 
 # FTP
-iptables -A INPUT -p tcp -m multiport --dports $FTP -j ACCEPT
+# iptables -A INPUT -p tcp -m multiport --dports $FTP -j ACCEPT
 
 # SMTP
-iptables -A INPUT -p tcp -m multiport --dports $SMTP -j ACCEPT
+# iptables -A INPUT -p tcp -m multiport --dports $SMTP -j ACCEPT
 
 # POP3
-iptables -A INPUT -p tcp -m multiport --dports $POP3 -j ACCEPT
+# iptables -A INPUT -p tcp -m multiport --dports $POP3 -j ACCEPT
 
 # IMAP
-iptables -A INPUT -p tcp -m multiport --dports $IMAP -j ACCEPT
+# iptables -A INPUT -p tcp -m multiport --dports $IMAP -j ACCEPT
 
 
 ##################################################################################
