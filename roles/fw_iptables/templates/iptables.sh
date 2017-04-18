@@ -130,26 +130,6 @@ iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_a
 iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_attach --rcheck --seconds 60
 iptables -A INPUT -p tcp --syn -m state --state NEW --dport=$SSH -m limit --limit 6/m --limit-burst 10 -j ACCEPT
 
-# // IPスプーフィング対策
-# // *Private IP用
--A INPUT -s 10.0.0.0/8 -j DROP
--A INPUT -s 172.16.0.0/12 -j DROP
--A INPUT -s 192.168.0.0/16 -j DROP
-# // *ローカルループバック用
--A INPUT -s 127.0.0.1/8 -j DROP
-# //TEST-NET
--A INPUT -s 169.254.0.0/16 -j DROP
-# // *リンクローカル用
--A INPUT -s 192.0.2.0/24 -j DROP
-# // *ClassDアドレス用
--A INPUT -s 224.0.0.0/4 -j DROP
-# // *ClassEアドレス用
--A INPUT -s 240.0.0.0/5 -j DROP
-
-# // Smurf攻撃 対策
--A INPUT -d 0.0.0.0/8 -j DROP
--A INPUT -d 254.255.255.255 -j DROP
-
 
 ##################################################################################
 # 攻撃対策：StealthScan
@@ -299,9 +279,9 @@ iptables -A INPUT -j DROP
 # SSH締め出し回避策
 ##################################################################################
 trap `finalize && exit 0`
-echo "In 30 seconds iptables will be automatically reset."
+echo "In 60 seconds iptables will be automatically reset."
 echo "Don't forget to test new SSH connection!"
 echo "If there is no problem then press Ctrl-C to finish."
-sleep 30
+sleep 60
 echo "rollback..."
 initialize
