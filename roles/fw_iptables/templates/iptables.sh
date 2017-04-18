@@ -1,42 +1,46 @@
+#!/bin/bash
+
 # PATH
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
 ######################################################
-# IP定義
+# (要定義)IP定義
 ######################################################
-# 内部ネットワークとして許可する範囲"
-LOCAL_NET="xxx.xxx.xxx.xxx/xx"
-# 内部ネットワークとして許可する範囲"
-ANY="0.0.0.0/0"
-# 信頼可能ホスト(配列)
-ALLOW_HOSTS=(
-  "xxx.xxx.xxx.xxx"
-  "xxx.xxx.xxx.xxx"
-  "xxx.xxx.xxx.xxx"
-)
+# 内部ネットワークとして許可する範囲
+# LOCAL_NET="xxx.xxx.xxx.xxx/xx"
+# 内部ネットワークとして許可する範囲
+#ANY="0.0.0.0/0"
+# 信頼可能ホスト(配列) 監視サーバIP等を記載
+#ALLOW_HOSTS=(
+#  "xxx.xxx.xxx.xxx"
+#  "xxx.xxx.xxx.xxx"
+#  "xxx.xxx.xxx.xxx"
+#)
 # 無条件破棄するホスト(配列)
-DENY_HOSTS=(
-  "xxx.xxx.xxx.xxx"
-  "xxx.xxx.xxx.xxx"
-  "xxx.xxx.xxx.xxx"
-)
+#DENY_HOSTS=(
+#  "xxx.xxx.xxx.xxx"
+#  "xxx.xxx.xxx.xxx"
+#  "xxx.xxx.xxx.xxx"
+#)
 
 
 ######################################################
-# Port定義
+# (要定義)Port定義
 ######################################################
-SSH={{iptables_ports.ssh}}
-FTP={{iptables_ports.ftp}}
-DNS={{iptables_ports.dns}}
-SMTP={{iptables_ports.smtp}}
-POP3={{iptables_ports.pop3}}
-IMAP={{iptables_ports.imap}}
-HTTP={{iptables_ports.http}}
-IDENT={{iptables_ports.ident}}
-NTP={{iptables_ports.ntp}}
-MYSQL={{iptables_ports.mysql}}
-NETBIOS={{iptables_ports.netbios}}
-DHCP={{iptables_ports.dhcp}}
+SSH=22
+FTP=20,21
+DNS=53
+SMTP=25,465,587
+POP3=110,995
+IMAP=143,993
+HTTP=80,443
+IDENT=113
+NTP=123
+MYSQL=3306
+NETBIOS=135,137,138,139,445
+DHCP=67,68
+
+#==================================================================================
 
 
 ######################################################
@@ -55,7 +59,10 @@ initialize(){
 
 # ルール適用後の反映処理
 finalize(){
-  /etc/init.d/iptables save
+  /etc/init.d/iptables save &&
+  /etc/init.d/iptables restart &&
+  return 0
+  return 1
 }
 
 
@@ -111,13 +118,17 @@ fi
 ##################################################################################
 # 確立済のパケット通信は全て許可
 ##################################################################################
-iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+# 確立済パケット
+iptables -A INPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 # // ICMP通信(ping等)の許可
--A INPUT -p icmp -j ACCEPT
+iptables -A INPUT -p icmp -j ACCEPT
 
 # // 新規ssh接続の許可(5接続以上は10秒に1回のみ接続可能とする)
--A INPUT -p tcp -m state --state NEW --dport=$SSH -m limit --limit 6/m --limit-burst 5 -j ACCEPT
+iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_attach --set
+iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_attach --rcheck --seconds 60
+iptables -A INPUT -p tcp --syn -m state --state NEW --dport=$SSH -m limit --limit 6/m --limit-burst 10 -j ACCEPT
 
 # // IPスプーフィング対策
 # // *Private IP用
@@ -139,11 +150,6 @@ iptables -A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 -A INPUT -d 0.0.0.0/8 -j DROP
 -A INPUT -d 254.255.255.255 -j DROP
 
-##################################################################################
-# 攻撃対策：フラグメントパケットによるポートスキャン、DOS攻撃
-##################################################################################
-iptables -A INPUT -f -j LOG --log-prefix "fragment_packet: "
-iptables -A INPUT -f -j DROP
 
 ##################################################################################
 # 攻撃対策：StealthScan
@@ -161,6 +167,14 @@ iptables -A INPUT -p tcp --tcp-flags ACK,FIN FIN -j STEALTH_SCAN
 iptables -A INPUT -p tcp --tcp-flags ACK,PSH PSH -j STEALTH_SCAN
 iptables -A INPUT -p tcp --tcp-flags ACK,URG URG -j STEALTH_SCAN
 
+
+##################################################################################
+# 攻撃対策：フラグメントパケットによるポートスキャン、DOS攻撃
+##################################################################################
+iptables -A INPUT -f -j LOG --log-prefix "fragment_packet: "
+iptables -A INPUT -f -j DROP
+
+
 ##################################################################################
 # 攻撃対策：Ping of Death
 ##################################################################################
@@ -176,6 +190,7 @@ iptables -A PING_OF_DEATH -p icmp icmp --icmp-type echo-request \
 iptables -A PING_OF_DEATH -j LOG --log-prefix "ping_of_death_attack: "
 iptables -A PING_OF_DEATH -j DROP
 iptables -A INPUT -p icmp --icmp-type echo-request
+
 
 ##################################################################################
 # 攻撃対策：SYN Flood Attack
@@ -193,6 +208,7 @@ iptables -A SYN_FLOOD -j LOG --log-prefix "syn_flood_attack: "
 iptables -A SYN_FLOOD -j DROP
 iptables -A INPUT -p tcp --syn -j SYN_FLOOD
 
+
 ##################################################################################
 # 攻撃対策：HTTP Dos/DDos
 ##################################################################################
@@ -209,29 +225,83 @@ iptables -A HTTP_DOS -j LOG --log-prefix "http_dos_attack: "
 iptables -A HTTP_DOS -j DROP
 iptables -A INPUT -p tcp -m multiport --dports $HTTP -j HTTP_DOS
 
+
 ##################################################################################
 # 攻撃対策：IDENT port probe
 ##################################################################################
 iptables -A INPUT -p tcp -m multiport --dports $IDENT -j REJECT --reject-with tcp-reset
 
+
 ##################################################################################
 # 攻撃対策：SSH Brute force
 ##################################################################################
-{% if iptables_ssh_password_authentication == "on" %}
 iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_attack --set
 iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_attack --rcheck --seconds 60 --hitcount 5 -j LOG --log-prefix "ssh_brute_force: "
 iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_attack --rcheck --seconds 60 --hitcount 5 -j REJECT --reject-with tcp-reset
 
+
 ##################################################################################
 # 攻撃対策：FTP Brute force
 ##################################################################################
-{% if iptables_ftp_server == "on" %}
 iptables -A INPUT -p tcp --syn -m multiport --dports $FTP -m recent --name ftp_attack --set
 iptables -A INPUT -p tcp --syn -m multiport --dports $FTP -m recent --name ftp_attack --rcheck --seconds 60 --hitcount 5 -j LOG --log-prefix "ftp_brute_force: "
 iptables -A INPUT -p tcp --syn -m multiport --dports $FTP -m
-iptables
-{% for item in iptables_enable_ports %}
--A INPUT -p {{item.protocol}} --dport={{item.port}} -j ACCEPT
-{% endfor %}
 
-COMMIT
+
+##################################################################################
+# 攻撃対策：ブロードキャスト、マルチキャスト宛のパケットの破棄
+##################################################################################
+iptables -A INPUT -d 192.168.1.255 -j LOG --log-prefix "drop_broadcast: "
+iptables -A INPUT -d 192.168.1.255 -j DROP
+iptables -A INPUT -d 255.255.255.255 -j LOG --log-prefix "drop_broadcast: "
+iptables -A INPUT -d 255.255.255.255 -j DROP
+iptables -A INPUT -d 224.0.0.1 -j LOG --log-prefix "drop_broadcast: "
+iptables -A INPUT -d 224.0.0.1 -j DROP
+
+
+##################################################################################
+# 全ホストからの入力許可
+##################################################################################
+
+# ICMP
+iptables -A INPUT -p icmp -j ACCEPT # ANY -> SELF
+
+# HTTP,HTTPS
+iptables -A INPUT -p tcp -m multiport --dports $HTTP -j ACCEPT
+
+# HTTP,HTTPS
+iptables -A INPUT -p tcp -m multiport --dports $SSH -j ACCEPT
+
+# DNS
+iptables -A INPUT -p tcp -m multiport --dports $DNS -j ACCEPT
+
+# FTP
+iptables -A INPUT -p tcp -m multiport --dports $FTP -j ACCEPT
+
+# SMTP
+iptables -A INPUT -p tcp -m multiport --dports $SMTP -j ACCEPT
+
+# POP3
+iptables -A INPUT -p tcp -m multiport --dports $POP3 -j ACCEPT
+
+# IMAP
+iptables -A INPUT -p tcp -m multiport --dports $IMAP -j ACCEPT
+
+
+##################################################################################
+# 全ホストからの入力許可
+##################################################################################
+iptables -A INPUT -j LOG --log-prefix "drop: "
+iptables -A INPUT -j DROP
+
+
+##################################################################################
+# SSH締め出し回避策
+##################################################################################
+trap `finalize && exit 0`
+echo "In 30 seconds iptables will be automatically reset."
+echo "Don't forget to test new SSH connection!"
+echo "If there is no problem then press Ctrl-C to finish."
+sleep 30
+echo "rollback..."
+initialize
