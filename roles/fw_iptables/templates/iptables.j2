@@ -7,17 +7,17 @@
 :FORWARD DROP [0:0]
 :OUTPUT ACCEPT [0:0]
 
+# // 確立済のパケット通信は全て許可
+-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
+
 # // ループバックアドレスの許可
 -A INPUT -i lo -j ACCEPT
-
-# // 確立済の全ての接続を許可
--A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT
 
 # // ICMP通信(ping等)の許可
 -A INPUT -p icmp -j ACCEPT
 
 # // 新規ssh接続の許可(5接続以上は10秒に1回のみ接続可能とする)
--A INPUT -p tcp -m state --state NEW --dport={{iptables_ssh_port}} -m limit --limit 6/m --limit-burst 5 -j ACCEPT
+-A INPUT -p tcp -m state --state NEW --dport={{iptables_ports.ssh}} -m limit --limit 6/m --limit-burst 5 -j ACCEPT
 
 # // IPスプーフィング対策
 # // *Private IP用
@@ -38,6 +38,62 @@
 # // Smurf攻撃 対策
 -A INPUT -d 0.0.0.0/8 -j DROP
 -A INPUT -d 254.255.255.255 -j DROP
+
+# // Stealth Scan攻撃対策
+-N STEALTH_SCAN
+-A STEALTH_SCAN -j LOG --log-prefix "stealth_scan_attack: "
+-A STEALTH_SCAN -j DROP
+-A INPUT -p tcp --tcp-flags SYN,ACK SYN,ACK -m state --state NEW -j STEALTH_SCAN
+-A INPUT -p tcp --tcp-flags ALL NONE -j STEALTH_SCAN
+-A INPUT -p tcp --tcp-flags SYN,FIN SYN,FIN -j STEALTH_SCAN
+-A INPUT -p tcp --tcp-flags SYN,RST SYN,RST -j STEALTH_SCAN
+-A INPUT -p tcp --tcp-flags ALL SYN,RST,ACK,FIN,URG -j STEALTH_SCAN
+-A INPUT -p tcp --tcp-flags FIN,RST FIN,RST -j STEALTH_SCAN
+-A INPUT -p tcp --tcp-flags ACK,FIN FIN -j STEALTH_SCAN
+-A INPUT -p tcp --tcp-flags ACK,PSH PSH -j STEALTH_SCAN
+-A INPUT -p tcp --tcp-flags ACK,URG URG -j STEALTH_SCAN
+
+# // Ping_of_Death攻撃対策
+-N PING_OF_DEATH
+-A PING_OF_DEATH -p icmp -icmp --icmp-type echo-request \
+    -m hashlimit \
+    --hashlimit 1/s \
+    --hashlimit-burst 10 \
+    --hashlimit-htable-expire 300000 \
+    --hashlimit-mode srcip \
+    --hashlimit-name t_PING_OF_DEATH \
+    -j RETURN
+-A PING_OF_DEATH -j LOG --log-prefix "ping_of_death_attack: "
+-A PING_OF_DEATH -j DROP
+-A INPUT -p icmp --icmp-type echo-request
+
+# // SYN Flood 攻撃対策
+-N SYN_FLOOD
+-A SYN_FLOOD -p tcp --syn \
+    -m hashlimit
+    --hashlimit 200/s
+    --hashlimit-burst 3 \
+    --hashlimit-htable-expire 300000 \
+    --hashlimit-mode srcip \
+    --hashlimit-name t_SYN_FLOOD \
+    -j RETURN
+-A SYN_FLOOD -j LOG --log-prefix "syn_flood_attack: "
+-A SYN_FLOOD -j DROP
+-A INPUT -p tcp --syn -j SYN_FLOOD
+
+# // HTTP Dos/DDos攻撃対策
+-N HTTP_DOS
+-A HTTP_DOS -p tcp -m multiport --dports $HTTP \
+    -m hashlimit
+    --hashlimit 1/s
+    --hashlimit-burst 100 \
+    --hashlimit-htable-expire 300000 \
+    --hashlimit-mode srcip \
+    --hashlimit-name t_HTTP_DOS \
+    -j RETURN
+-A HTTP_DOS -j LOG --log-prefix "http_dos_attack: "
+-A HTTP_DOS -j DROP
+-A INPUT -p tcp -m multiport --dports $HTTP -j HTTP_DOS
 
 # // その他使用ポートの許可(別途group_vars,host_varsを参照)
 {% for item in iptables_enable_ports %}

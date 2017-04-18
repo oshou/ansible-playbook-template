@@ -1,26 +1,28 @@
 ---
 - name: master config file
   # 対象hosts
-  hosts: servers
+  hosts:
+    - all
   # sudo実行の有無
   become: yes
   # 参照設定値(group_vars->host_varsの順に記述)
   vars_files:
     - group_vars/pretask_ansible.yml
-    - group_vars/common.yml
-    - group_vars/fw_iptables.yml
+      # - group_vars/common.yml
+      # - group_vars/fw_iptables.yml
     # - group_vars/dns_bind.yml
     # - group_vars/web_apache.yml
     # - group_vars/web_nginx.yml
     # - group_vars/app_phpfpm.yml
     # - group_vars/db_mysql.yml
-    - host_vars/{{inventory_hostname}}.yml
+    # - host_vars/{{inventory_hostname}}.yml
   # 実行タスク等
   roles:
     - common
-    - fw_iptables
+    # - fw_iptables
     # - dns_bind
     # - web_apache
     # - web_nginx
     # - app_phpfpm
     # - db_mysql
+    - test_roles
