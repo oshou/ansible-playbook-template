@@ -3,8 +3,10 @@
 # PATH
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 
+#=====(要修正箇所-START)=================================================
+
 ######################################################
-# (要定義)IP定義
+# IP定義
 ######################################################
 
 # 全てのIPを表す設定を定義
@@ -14,14 +16,14 @@ ANY="0.0.0.0/0"
 # **必要に応じてアンコメントアウト**
 # LOCAL_NET="xxx.xxx.xxx.xxx/xx"
 
-# 信頼可能ホスト(配列) 監視サーバIP等を記載
+# アクセス許可ホスト(配列) 監視サーバIP等を記載
 # **必要に応じてアンコメントアウト**
 # ALLOW_HOSTS=(
 #  "xxx.xxx.xxx.xxx"
 #  "xxx.xxx.xxx.xxx"
 #  "xxx.xxx.xxx.xxx"
 # )
-# 無条件破棄するホスト(配列)
+# アクセス拒否ホスト(配列)
 # **必要に応じてアンコメントアウト**
 # DENY_HOSTS=(
 #  "xxx.xxx.xxx.xxx"
@@ -46,13 +48,12 @@ MYSQL=3306
 NETBIOS=135,137,138,139,445
 DHCP=67,68
 
-#==================================================================================
+#=====(要修正箇所-END)===================================================
 
 
 ######################################################
 # 関数定義
 ######################################################
-
 # ルール適用前の初期化
 initialize(){
   iptables -F # テーブル初期化
@@ -77,10 +78,10 @@ finalize(){
 ##################################################################################
 initialize
 
+
 ##################################################################################
 # 基本ポリシーの設定
 ##################################################################################
-
 # INPUT,FORWARDはホワイトリスト方式で許可,OUTPUTは基本全て許可
 iptables -P INPUT DROP
 iptables -P OUTPUT ACCEPT
@@ -90,7 +91,6 @@ iptables -P FORWARD DROP
 ##################################################################################
 # 信頼できるホストの許可
 ##################################################################################
-
 # ループバックアドレスの許可
 iptables -A INPUT -i lo -j ACCEPT
 
@@ -100,7 +100,7 @@ then
   iptables -A INPUT -p tcp -s $LOCAL_NET -j ACCEPT
 fi
 
-# 信頼可能ホストの許可
+# アクセス許可ホストの許可設定
 if [ "${ALLOW_HOST[@]}" ]
 then
   for allow_host in ${ALLOW_HOSTS[@]}
@@ -109,9 +109,14 @@ then
   done
 fi
 
+# 確立済のパケット通信は全て許可
+iptables -A INPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
+
+
 ##################################################################################
-# 指定ホストからのアクセスを拒否
+# 信頼できないホストの拒否
 ##################################################################################
+# アクセス拒否ホストの拒否設定
 if [ "${DENY_HOSTS[@]}" ]
 then
   for host in ${DENY_HOSTS[@]}
@@ -120,21 +125,6 @@ then
     iptables -A INPUT -s $ip -j DROP
   done
 fi
-
-##################################################################################
-# 確立済のパケット通信は全て許可
-##################################################################################
-
-# 確立済パケット
-iptables -A INPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
-
-# // ICMP通信(ping等)の許可
-iptables -A INPUT -p icmp -j ACCEPT
-
-# // 新規ssh接続の許可(5接続以上は10秒に1回のみ接続可能とする)
-iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_attach --set
-iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_attach --rcheck --seconds 60
-iptables -A INPUT -p tcp --syn -m state --state NEW --dport=$SSH -m limit --limit 6/m --limit-burst 10 -j ACCEPT
 
 
 ##################################################################################
@@ -166,11 +156,11 @@ iptables -A INPUT -f -j DROP
 ##################################################################################
 iptables -N PING_OF_DEATH
 iptables -A PING_OF_DEATH -p icmp icmp --icmp-type echo-request \
-    -m hashlimit \
-    --hashlimit 1/s \
-    --hashlimit-burst 10 \
+    -m hashlimit                     \
+    --hashlimit 1/s                  \
+    --hashlimit-burst 10             \
     --hashlimit-htable-expire 300000 \
-    --hashlimit-mode srcip \
+    --hashlimit-mode srcip           \
     --hashlimit-name t_PING_OF_DEATH \
     -j RETURN
 iptables -A PING_OF_DEATH -j LOG --log-prefix "ping_of_death_attack: "
@@ -180,15 +170,19 @@ iptables -A INPUT -p icmp --icmp-type echo-request
 
 ##################################################################################
 # 攻撃対策：SYN Flood Attack
+# * 初回100回は制限無し
+# * 101回目以降は1秒間に1回ずつアクセス
+# * 接続試行回数は接続元IP毎に区別してカウントされる。
+# * 接続試行回数のカウントは5分置きにリセットされる
 ##################################################################################
 iptables -N SYN_FLOOD
 iptables -A SYN_FLOOD -p tcp --syn \
-    -m hashlimit
-    --hashlimit 200/s
-    --hashlimit-burst 3 \
+    -m hashlimit                     \
+    --hashlimit 200/s                \
+    --hashlimit-burst 3              \
     --hashlimit-htable-expire 300000 \
-    --hashlimit-mode srcip \
-    --hashlimit-name t_SYN_FLOOD \
+    --hashlimit-mode srcip           \
+    --hashlimit-name t_SYN_FLOOD     \
     -j RETURN
 iptables -A SYN_FLOOD -j LOG --log-prefix "syn_flood_attack: "
 iptables -A SYN_FLOOD -j DROP
@@ -197,15 +191,19 @@ iptables -A INPUT -p tcp --syn -j SYN_FLOOD
 
 ##################################################################################
 # 攻撃対策：HTTP Dos/DDos
+# * 初回100回は制限無し
+# * 101回目以降は1秒間に1回ずつアクセス
+# * 接続試行回数は接続元IP毎に区別してカウントされる。
+# * 接続試行回数のカウントは5分置きにリセットされる
 ##################################################################################
 iptables -N HTTP_DOS
 iptables -A HTTP_DOS -p tcp -m multiport --dports $HTTP \
-    -m hashlimit
-    --hashlimit 1/s
-    --hashlimit-burst 100 \
+    -m hashlimit                     \
+    --hashlimit 1/s                  \
+    --hashlimit-burst 100            \
     --hashlimit-htable-expire 300000 \
-    --hashlimit-mode srcip \
-    --hashlimit-name t_HTTP_DOS \
+    --hashlimit-mode srcip           \
+    --hashlimit-name t_HTTP_DOS      \
     -j RETURN
 iptables -A HTTP_DOS -j LOG --log-prefix "http_dos_attack: "
 iptables -A HTTP_DOS -j DROP
@@ -213,25 +211,54 @@ iptables -A INPUT -p tcp -m multiport --dports $HTTP -j HTTP_DOS
 
 
 ##################################################################################
-# 攻撃対策：IDENT port probe
+# 攻撃対策：SSH Brute force(パスワード総当り攻撃)
+# * パスワード認証使用時に設定
+# * 初回10回は制限無し
+# * 11回目以降は10秒間に1回ずつアクセス
+# * 接続試行回数は接続元IP毎に区別してカウントされる。
+# * 接続試行回数のカウントは30分置きにリセットされる
 ##################################################################################
-iptables -A INPUT -p tcp -m multiport --dports $IDENT -j REJECT --reject-with tcp-reset
-
-
-##################################################################################
-# 攻撃対策：SSH Brute force
-##################################################################################
-iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_attack --set
-iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_attack --rcheck --seconds 60 --hitcount 5 -j LOG --log-prefix "ssh_brute_force: "
-iptables -A INPUT -p tcp --syn -m multiport --dports $SSH -m recent --name ssh_attack --rcheck --seconds 60 --hitcount 5 -j REJECT --reject-with tcp-reset
+iptables -N SSH_BRUTE_FORCE
+iptables -A SSH_BRUTE_FORCE -p tcp -m multiport --dports $SSH \
+    -m hashlimit                        \
+    --hashlimit 6/minute                \
+    --hashlimit-burst 10                \
+    --hashlimit-htable-expire 1800000   \
+    --hashlimit-mode srcip              \
+    --hashlimit-name t_SSH_BRUTE_FORCE  \
+    -j RETURN
+iptables -A SSH_BRUTE_FORCE -j LOG --log-prefix "ssh_brute_force: "
+iptables -A SSH_BRUTE_FORCE -j REJECT
+iptables -A INPUT -p tcp -m multiport --dports $SSH -j SSH_BRUTE_FORCE
 
 
 ##################################################################################
 # 攻撃対策：FTP Brute force
+# * パスワード認証使用時に設定
+# * 初回10回は制限無し
+# * 11回目以降は10秒間に1回ずつアクセス
+# * 接続試行回数は接続元IP毎に区別してカウントされる。
+# * 接続試行回数のカウントは30分置きにリセットされる
 ##################################################################################
-iptables -A INPUT -p tcp --syn -m multiport --dports $FTP -m recent --name ftp_attack --set
-iptables -A INPUT -p tcp --syn -m multiport --dports $FTP -m recent --name ftp_attack --rcheck --seconds 60 --hitcount 5 -j LOG --log-prefix "ftp_brute_force: "
-iptables -A INPUT -p tcp --syn -m multiport --dports $FTP -m
+iptables -N FTP_BRUTE_FORCE
+iptables -A FTP_BRUTE_FORCE -p tcp -m multiport --dports $FTP \
+    -m hashlimit                        \
+    --hashlimit 6/minute                \
+    --hashlimit-burst 10                \
+    --hashlimit-htable-expire 1800000   \
+    --hashlimit-mode srcip              \
+    --hashlimit-name t_FTP_BRUTE_FORCE  \
+    -j RETURN
+
+iptables -A FTP_BRUTE_FORCE -j LOG --log-prefix "ftp_brute_force: "
+iptables -A FTP_BRUTE_FORCE -j REJECT
+iptables -A INPUT -p tcp -m multiport --dports $FTP -j FTP_BRUTE_FORCE
+
+
+##################################################################################
+# 攻撃対策：IDENT port probe
+##################################################################################
+iptables -A INPUT -p tcp -m multiport --dports $IDENT -j REJECT --reject-with tcp-reset
 
 
 ##################################################################################
@@ -252,20 +279,20 @@ iptables -A INPUT -d 224.0.0.1 -j DROP
 # ICMP
 iptables -A INPUT -p icmp -j ACCEPT
 
-# HTTP,HTTPS
-# **必要に応じてアンコメントアウト**
-iptables -A INPUT -p tcp -m multiport --dports $HTTP -j ACCEPT
-
 # SSH
 # **必要に応じてアンコメントアウト**
 # iptables -A INPUT -p tcp -m multiport --dports $SSH -j ACCEPT
 
+# FTP
+# iptables -A INPUT -p tcp -m multiport --dports $FTP -j ACCEPT
+
+# HTTP,HTTPS
+# **必要に応じてアンコメントアウト**
+# iptables -A INPUT -p tcp -m multiport --dports $HTTP -j ACCEPT
+
 # DNS
 # **必要に応じてアンコメントアウト**
 # iptables -A INPUT -p tcp -m multiport --dports $DNS -j ACCEPT
-
-# FTP
-# iptables -A INPUT -p tcp -m multiport --dports $FTP -j ACCEPT
 
 # SMTP
 # iptables -A INPUT -p tcp -m multiport --dports $SMTP -j ACCEPT
@@ -278,7 +305,7 @@ iptables -A INPUT -p tcp -m multiport --dports $HTTP -j ACCEPT
 
 
 ##################################################################################
-# 全ホストからの入力許可
+# その他ホストはロギングして破棄
 ##################################################################################
 iptables -A INPUT -j LOG --log-prefix "drop: "
 iptables -A INPUT -j DROP
@@ -286,6 +313,8 @@ iptables -A INPUT -j DROP
 
 ##################################################################################
 # SSH締め出し回避策
+# * Ctrl+C押下でiptables設定確定
+# * Ctrl+C押下しなければ60秒後に設定前の状態へ自動でリセットされる
 ##################################################################################
 trap `finalize && exit 0`
 echo "In 60 seconds iptables will be automatically reset."
