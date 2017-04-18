@@ -59,8 +59,8 @@ initialize(){
   iptables -X # チェーン解除
   iptables -Z # パケットカウンタ・バイトカウンタをゼロリセット
   iptables -P INPUT ACCEPT # 設定のため一時ポリシー変更
+  iptables -P OUTPUT ACCEPT # 設定のため一時ポリシー変更
   iptables -P FORWARD ACCEPT # 設定のため一時ポリシー変更
-  iptables -P DROP ACCEPT # 設定のため一時ポリシー変更
 }
 
 # ルール適用後の反映処理
