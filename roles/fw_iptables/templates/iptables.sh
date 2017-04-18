@@ -155,7 +155,7 @@ iptables -A INPUT -f -j DROP
 # 攻撃対策：Ping of Death
 ##################################################################################
 iptables -N PING_OF_DEATH
-iptables -A PING_OF_DEATH -p icmp icmp --icmp-type echo-request \
+iptables -A PING_OF_DEATH -p icmp --icmp-type echo-request \
     -m hashlimit                     \
     --hashlimit 1/s                  \
     --hashlimit-burst 10             \
