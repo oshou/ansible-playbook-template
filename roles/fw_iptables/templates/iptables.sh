@@ -280,8 +280,8 @@ iptables -A INPUT -d 224.0.0.1 -j DROP
 iptables -A INPUT -p icmp -j ACCEPT
 
 # SSH
-# **必要に応じてアンコメントアウト**
-# iptables -A INPUT -p tcp -m multiport --dports $SSH -j ACCEPT
+# **必要に応じてコメントアウト**
+iptables -A INPUT -p tcp -m multiport --dports $SSH -j ACCEPT
 
 # FTP
 # iptables -A INPUT -p tcp -m multiport --dports $FTP -j ACCEPT
