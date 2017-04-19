@@ -14,7 +14,10 @@ ANY="0.0.0.0/0"
 
 # 内部ネットワークとして許可する範囲
 # **必要に応じてアンコメントアウト**
-# LOCAL_NET="xxx.xxx.xxx.xxx/xx"
+# LOCAL_NETS=(
+#  "xxx.xxx.xxx.xxx"
+#  "xxx.xxx.xxx.xxx"
+# )
 
 # アクセス許可ホスト(配列) 監視サーバIP等を記載
 # **必要に応じてアンコメントアウト**
@@ -95,13 +98,16 @@ iptables -P FORWARD DROP
 iptables -A INPUT -i lo -j ACCEPT
 
 # ローカルネットワークの許可
-if [ "$LOCAL_NET" ]
+if [ "$LOCAL_NETS[@]" != "" ]
 then
-  iptables -A INPUT -p tcp -s $LOCAL_NET -j ACCEPT
+  for local_net in ${LOCAL_NETS[@]}
+  do
+    iptables -A INPUT -p tcp -s $local_net -j ACCEPT
+  done
 fi
 
 # アクセス許可ホストの許可設定
-if [ "${ALLOW_HOSTS[@]}" ]
+if [ "$ALLOW_HOSTS[@]" != "" ]
 then
   for allow_host in ${ALLOW_HOSTS[@]}
   do
@@ -117,7 +123,7 @@ iptables -A INPUT -p tcp -m state --state ESTABLISHED,RELATED -j ACCEPT
 # 信頼できないホストの拒否
 ##################################################################################
 # アクセス拒否ホストの拒否設定
-if [ "${DENY_HOSTS[@]}" ]
+if [ "$DENY_HOSTS[@]" != ""  ]
 then
   for host in ${DENY_HOSTS[@]}
   do
