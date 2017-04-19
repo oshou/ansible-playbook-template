@@ -101,7 +101,7 @@ then
 fi
 
 # アクセス許可ホストの許可設定
-if [ "${ALLOW_HOST[@]}" ]
+if [ "${ALLOW_HOSTS[@]}" ]
 then
   for allow_host in ${ALLOW_HOSTS[@]}
   do
@@ -131,7 +131,7 @@ fi
 # 攻撃対策：StealthScan
 ##################################################################################
 iptables -N STEALTH_SCAN
-iptables -A STEALTH_SCAN -j LOG --log-prefix "stealth_scan_attack: "
+iptables -A STEALTH_SCAN -j LOG --log-prefix "stealth_scan: "
 iptables -A STEALTH_SCAN -j DROP
 iptables -A INPUT -p tcp --tcp-flags SYN,ACK SYN,ACK -m state --state NEW -j STEALTH_SCAN
 iptables -A INPUT -p tcp --tcp-flags ALL NONE -j STEALTH_SCAN
@@ -163,7 +163,7 @@ iptables -A PING_OF_DEATH -p icmp --icmp-type echo-request \
     --hashlimit-mode srcip           \
     --hashlimit-name t_PING_OF_DEATH \
     -j RETURN
-iptables -A PING_OF_DEATH -j LOG --log-prefix "ping_of_death_attack: "
+iptables -A PING_OF_DEATH -j LOG --log-prefix "ping_of_death: "
 iptables -A PING_OF_DEATH -j DROP
 iptables -A INPUT -p icmp --icmp-type echo-request -j PING_OF_DEATH
 
@@ -184,7 +184,7 @@ iptables -A SYN_FLOOD -p tcp --syn \
     --hashlimit-mode srcip           \
     --hashlimit-name t_SYN_FLOOD     \
     -j RETURN
-iptables -A SYN_FLOOD -j LOG --log-prefix "syn_flood_attack: "
+iptables -A SYN_FLOOD -j LOG --log-prefix "syn_flood: "
 iptables -A SYN_FLOOD -j DROP
 iptables -A INPUT -p tcp --syn -j SYN_FLOOD
 
@@ -205,7 +205,7 @@ iptables -A HTTP_DOS -p tcp -m multiport --dports $HTTP \
     --hashlimit-mode srcip           \
     --hashlimit-name t_HTTP_DOS      \
     -j RETURN
-iptables -A HTTP_DOS -j LOG --log-prefix "http_dos_attack: "
+iptables -A HTTP_DOS -j LOG --log-prefix "http_dos: "
 iptables -A HTTP_DOS -j DROP
 iptables -A INPUT -p tcp -m multiport --dports $HTTP -j HTTP_DOS
 
