@@ -1,8 +1,8 @@
 ---
 - name: install repository
-  yum_repository: >
-    name=epel
-    description="EPEL YUM repo"
-    baseurl=http://download.fedoraproject.org/pub/epel/$releasever/$basearch/
-    enabled=no
-
+  ignore_errors: true
+  yum: >
+    name="{{item.name}}"
+    state=installed
+  with_items:
+    - "{{common_repos}}"

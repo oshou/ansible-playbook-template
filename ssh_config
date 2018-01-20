@@ -1,0 +1,6 @@
+ForwardAgent yes
+
+Host tmp01
+  HostName 192.168.33.201
+  Port 22
+  User ansible

@@ -1,0 +1,18 @@
+---
+- name: set hosts - remove ipv6 entry
+  lineinfile: >
+    dest=/etc/hosts
+    state=present
+    backup=yes
+    regexp="{{item.regexp}}"
+    line="{{item.line}}"
+  with_items:
+    - {regexp: '^#? ?::1', line: '#::1'}
+
+- name: set hosts - add new entry
+  lineinfile: >
+    dest=/etc/hosts
+    state=present
+    line='{{item.ip}} {{item.host}}'
+  with_items:
+    - "{{common_hosts}}"

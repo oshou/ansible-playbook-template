@@ -1,12 +1,19 @@
 ---
-- name: install logwatch
+- name: install logwatch packages
   yum: >
-    name=logwatch
-    state=present
-
-- name: set logwatch report recieve mail-address
-  lineinfile: >
-    dest=/usr/share/logwatch/default.conf/logwatch.conf
-    state=present
-    regexp='^#? ?MailTo'
-    line='MailTo = {{common_logwatch_mail_address}}'
+    name="logwatch"
+    state=installed
+- name: copy original logwatch setting
+  copy: >
+    remote_src=true
+    src=/usr/share/logwatch/default.conf/logwatch.conf
+    dest=/etc/logwatch/conf/logwatch.conf
+- name: set logwatch setting
+  lineinfile:
+    dest: /etc/logwatch/conf/logwatch.conf
+    regexp: '^\s*#?\s*{{ item.key }}\s*=\s*.+{{ item.end }}\s*$'
+    line: '{{ item.key }} = {{ item.val }}'
+    backrefs: no
+    backup: yes
+    state: present
+  with_items: "{{ common_logwatch_conf }}"

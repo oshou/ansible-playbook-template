@@ -1,0 +1,103 @@
+---
+common_locale: "ja_JP.UTF-8"
+common_keyboard:
+  KEYMAP: "jp106"
+  FONT: "latarcyrheb-sun16"
+  XkbLayout: "jp"
+  KEYTABLE: "jp106"
+  MODEL: "jp106"
+  LAYOUT: "jp"
+  KEYBOARDTYPE: "pc"
+common_repos:
+  - name: "epel-release"
+common_group_packages:
+  - name: "Base"
+  - name: "System Administration Tools"
+  - name: "Development tools"
+common_packages:
+  - name: "python2"
+  - name: "libselinux-python"
+  - name: "gcc"
+  - name: "gcc-c++"
+  - name: "libgcc"
+  - name: "libxml2"
+  - name: "libxml2-devel"
+  - name: "libxml2-python"
+  - name: "make"
+  - name: "curl"
+  - name: "ncurses-devel"
+  - name: "vim-common"
+  - name: "git"
+  - name: "nkf"
+  - name: "rsync"
+  - name: "ntp"
+  - name: "postfix"
+  - name: "logwatch"
+  - name: "iptables-services"
+  - name: "nmap"
+  - name: "tcpdump"
+  - name: "sysstat"
+  - name: "dstat"
+  - name: "htop"
+  - name: "iotop"
+  - name: "fio"
+common_enable_services:
+  - name: "network"
+  - name: "sshd"
+  - name: "ntpd"
+  - name: "crond"
+  - name: "postfix"
+common_disable_services:
+  - name: "kdump"
+  - name: "firewalld"
+  - name: "iptables"
+  - name: "chronyd"
+common_ssh_port: "22"
+common_hosts:
+ - ip: "127.0.0.1"
+   host: "{{inventory_hostname}}"
+common_ntp_server: "ntp.nc.u-tokyo.ac.jp"
+common_name_server:
+  - name: "8.8.8.8"
+  - name: "8.8.4.4"
+common_log_rotate: "24"
+common_logwatch_send_mail: "adf1985adf@gmail.com"
+common_sysctl_conf:
+  # For SYN flood attack
+  - {key: 'net.ipv4.tcp_syncookies', val: 1, end: '' }
+  # For smurf attack
+  - {key: 'net.ipv4.icmp_echo_ignore_broadcasts', val: 1, end: '' }
+  # For disable IPv6
+  - {key: 'net.ipv6.conf.all.disable_ipv6',     val: 1, end: '' }
+  - {key: 'net.ipv6.conf.default.disable_ipv6', val: 1, end: '' }
+  # For quick recycle TCP-WAIT
+  - {key: 'net.ipv4.tcp_fin_timeout', val: 30, end: '' }
+  - {key: 'net.ipv4.tcp_tw_reuse',    val:  1, end: '' }
+  # For net optimization
+  - {key: 'net.core.somaxconn', val: 16384, end: '' }
+  - {key: 'net.core.netdev_max_backlog',  val: 16384, end: '' }
+  - {key: 'net.ipv4.tcp_max_syn_backlog', val: 16384, end: '' }
+common_sshd_config:
+  - { key: 'Protocol', val:  '2', end: '' }
+  - { key: 'Port',     val: '22', end: '' }
+  - { key: 'PermitRootLogin',        val: 'no',  end: '' }
+  - { key: 'PermitEmptyPasswords',   val: 'no',  end: '' }
+  - { key: 'PasswordAuthentication', val: 'yes', end: '' }
+common_keyboard_co6:
+  - { key: 'KEYTABLE', val: '"{{ common_keyboard.KEYTABLE }}"', end: '' }
+  - { key: 'MODEL',    val: '"{{ common_keyboard.MODEL }}"',    end: '' }
+  - { key: 'LAYOUT',   val: '"{{ common_keyboard.LAYOUT }}"',   end: '' }
+  - { key: 'KEYBOARDTYPE', val: '{{ common_keyboard.KEYBOARDTYPE }}', end: '' }
+common_keyboard_co7:
+  - { key: 'KEYMAP', val: '"{{ common_keyboard.KEYMAP }}"', end: '' }
+  - { key: 'FONT',   val: '"{{ common_keyboard.FONT }}"',   end: '' }
+common_logwatch_conf:
+  - { key: 'MailTo', val: '"{{ common_logwatch_send_mail }}"', end: '' }
+  - { key: 'Print',  val: 'No', end: '' }
+  - { key: 'mailer', val: '"/usr/sbin/sendmail -t"', end: ''}
+common_sudoers:
+  - { key: '%wheel', val: 'ALL=(ALL) ALL', end: '\(ALL\)\s+ALL' }
+is_rhel6: "{{ ansible_os_family == 'RedHat' and ansible_distribution_major_version == '6' }}"
+is_rhel7: "{{ ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7' }}"
+is_centos6: "{{ is_rhel6 }}"
+is_centos7: "{{ is_rhel7 }}"

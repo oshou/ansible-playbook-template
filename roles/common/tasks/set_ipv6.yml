@@ -1,7 +1,0 @@
----
-- name: disable ipv6
-  lineinfile: >
-    dest=/etc/modprobe.d/disable-ipv6.conf
-    state=present
-    create=yes
-    line='options ipv6 disable=1'

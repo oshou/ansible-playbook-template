@@ -1,13 +1,36 @@
 ---
-- name: set keyboard
+- name: set keyboard(centos6)
+  lineinfile:
+    dest: /etc/sysconfig/keyboard
+    regexp: '^(\s*)#?(\s*){{ item.key }}\s*=\s*.+{{ item.end }}\s*$'
+    line: '\1\2{{ item.key }}={{ item.val }}'
+    create: yes
+    backrefs: yes
+    backup: yes
+    state: present
+  with_items: "{{ common_keyboard_co6 }}"
+  when: is_centos6
+
+- name: set keyboard(centos7) - step1
+  lineinfile:
+    dest: /etc/vconsole.conf
+    regexp: '^(\s*)#?(\s*){{ item.key }}\s*=\s*.+{{ item.end }}\s*$'
+    line: '\1\2{{ item.key }}={{ item.val }}'
+    create: yes
+    backrefs: yes
+    backup: yes
+    state: present
+  with_items: "{{ common_keyboard_co7 }}"
+  when: is_centos7
+
+- name: set keyboard(centos7) - step2
   lineinfile: >
-    dest=/etc/sysconfig/keyboard
+    dest=/etc/X11/xorg.conf.d/00-keyboard.conf
     state=present
     create=yes
-    regexp='{{item.regexp}}'
-    line='{{item.line}}'
+    backup=yes
+    regexp="{{item.regexp}}"
+    line="{{item.line}}"
   with_items:
-    - {regexp: '^#? ?KEYTABLE', line: 'KEYTABLE="{{common_keyboard.KEYTABLE}}"'}
-    - {regexp: '^#? ?MODEL', line: 'MODEL="{{common_keyboard.MODEL}}"'}
-    - {regexp: '^#? ?LAYOUT', line: 'LAYOUT="{{common_keyboard.LAYOUT}}"'}
-    - {regexp: '^#? ?KEYBOARDTYPE', line: 'KEYBOARDTYPE="{{common_keyboard.KEYBOARDTYPE}}"'}
+    - {regexp: 'Option "XkbLayout"', line: 'Option "XkbLayout" "{{common_keyboard.XkbLayout}}"'}
+  when: is_centos7

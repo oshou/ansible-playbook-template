@@ -1,0 +1,22 @@
+---
+- name: set ntp.conf - remove default entry
+  lineinfile: >
+    dest=/etc/ntp.conf
+    state=present
+    backup=yes
+    regexp="{{item.regexp}}"
+    line="{{item.line}}"
+  with_items:
+    - {regexp: '^#? ?server 0', line: '#server 0.centos.pool.ntp.org iburst'}
+    - {regexp: '^#? ?server 1', line: '#server 1.centos.pool.ntp.org iburst'}
+    - {regexp: '^#? ?server 2', line: '#server 2.centos.pool.ntp.org iburst'}
+    - {regexp: '^#? ?server 3', line: '#server 3.centos.pool.ntp.org iburst'}
+
+- name: set ntp.conf
+  lineinfile: >
+    dest=/etc/ntp.conf
+    state=present
+    line='server {{item}} iburst'
+  with_items:
+    - "{{common_ntp_server}}"
+  notify: restart_ntpd
