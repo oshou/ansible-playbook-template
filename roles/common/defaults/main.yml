@@ -52,6 +52,8 @@ common_disable_services:
   - name: "firewalld"
   - name: "iptables"
   - name: "chronyd"
+  - name: "smartd"
+  - name: "atd"
 common_ssh_port: "22"
 common_hosts:
  - ip: "127.0.0.1"
