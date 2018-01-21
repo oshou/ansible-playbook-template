@@ -14,5 +14,6 @@
 - include: set_services.yml
 - include: set_ntpd.yml
 - include: set_kernel_params.yml
+- include: set_login_prompt.yml
 - include: set_logwatch.yml
 - include: system_update.yml

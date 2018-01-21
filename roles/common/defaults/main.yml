@@ -54,6 +54,12 @@ common_disable_services:
   - name: "chronyd"
   - name: "smartd"
   - name: "atd"
+  - name: "rngd"
+  - name: "abrt-ccpp"
+  - name: "abrt-oops"
+  - name: "abrt-vmcore"
+  - name: "abrt-xorg"
+  - name: "abrtd"
 common_ssh_port: "22"
 common_hosts:
  - ip: "127.0.0.1"
@@ -82,6 +88,7 @@ common_sysctl_conf:
 common_sshd_config:
   - { key: 'Protocol', val:  '2', end: '' }
   - { key: 'Port',     val: '22', end: '' }
+  - { key: 'ListenAddress',     val: '0.0.0.0', end: '' }
   - { key: 'PermitRootLogin',        val: 'no',  end: '' }
   - { key: 'PermitEmptyPasswords',   val: 'no',  end: '' }
   - { key: 'PasswordAuthentication', val: 'yes', end: '' }
