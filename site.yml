@@ -3,10 +3,10 @@
   become: yes
   user: ansible
   hosts:
-    - prd
+    - dev
   vars_files:
-    # - "{{inventory_dir}}/vars/vars_secure_params.yml"
-    -  "roles/common/defaults/vars_secure_params.yml"
+    -  "{{inventory_dir}}/vars_secure_params.yml"
+    -  "{{inventory_dir}}/all.yml"
   roles:
     - common
     # - fw_iptables
