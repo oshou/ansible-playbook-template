@@ -1,0 +1,11 @@
+---
+- name: set sshd
+  lineinfile:
+    dest: /etc/ssh/sshd_config
+    regexp: '^(\s*)#?(\s*){{ item.key }}\s+.+{{ item.end }}\s*$'
+    line: '\1\2{{ item.key }} {{ item.val }}'
+    backrefs: yes
+    backup: yes
+    state: present
+  with_items: "{{ common_sshd_config }}"
+  notify: restart_sshd

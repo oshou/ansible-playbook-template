@@ -1,27 +1,19 @@
 ---
-- include: set_keyboard.yml
-- include: set_locale.yml
-- include: set_timezone.yml
-- include: set_kernel_params.yml
-- include: set_hostname.yml
 - include: set_su.yml
 - include: set_users.yml
-- include: set_ssh.yml
-- include: set_yum.yml
-- include: set_repository.yml
-- include: set_common_packages.yml
-- include: set_services.yml
-- include: set_ipv6.yml
+- include: set_timezone.yml
+- include: set_locale.yml
+- include: set_keyboard.yml
+- include: set_hostname.yml
+- include: set_hosts.yml
+- include: set_resolver.yml
 - include: set_selinux.yml
-- include: set_ntp.yml
-- include: set_logrotate.yml
+- include: set_sshd.yml
+- include: set_repository.yml
+- include: set_packages.yml
+- include: set_services.yml
+- include: set_ntpd.yml
+- include: set_kernel_params.yml
+- include: set_login_prompt.yml
 - include: set_logwatch.yml
-
-# Set network interface
-# // vi /etc/sysconfig/network-scripts/ifcfg-xx
-
-# Set local hosts
-# // vi /etc/hosts
-
-# Set resolver
-# // vi /etc/resolv.conf
+- include: system_update.yml

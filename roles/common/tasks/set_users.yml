@@ -1,32 +1,14 @@
 ---
-- name: change root password
-  user: >
-    name=root
-    password={{common_user.root.password |password_hash('sha512')}}
+- name: set root password
   no_log: true
+  user:
+    name: root
+    password: "{{ common_user.root.password | password_hash('sha512') }}"
 
-- name: create admin-user(wheel group)
-  user: >
-    name={{item.name}}
-    password={{item.password |password_hash('sha512')}}
-    groups="wheel"
-  with_items:
-    - "{{common_user.ansible}}"
-    - "{{common_user.wheel}}"
+- name: set admin-user(wheel)
   no_log: true
-
-- name: create general-user(non-wheel group)
-  user: >
-    name={{item.name}}
-    password={{item.password |password_hash('sha512')}}
-  with_items:
-    - "{{common_user.general}}"
-  no_log: true
-
-  # - name: set publickey authentication
-  # authorized_key: >
-  # user={{item.name}}
-  # key={{lookup('file','~/.ssh/id_rsa.pub')}}
-  # with_items:
-  # - "{{common_user.ansible}}"
-  # - "{{common_user.wheel}}"
+  user:
+    name: "{{ item.name }}"
+    groups: "{{ item.groups | default('wheel') }}"
+    password: "{{ item.password | password_hash('sha512') }}"
+  with_items: "{{ common_user.admin }}"

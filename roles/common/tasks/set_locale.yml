@@ -1,11 +1,20 @@
 ---
-- name: set locale
+- name: set locale(centos6)
   lineinfile: >
     dest=/etc/sysconfig/i18n
     state=present
-    regexp='{{item.regexp}}'
-    line='{{item.line}}'
-  with_items:
-    - {regexp: '^#? ?LANG', line: 'LANG="{{common_locale.LANG}}"'}
-    - {regexp: '^#? ?SUPPORTED', line: 'SUPPORTED="{{common_locale.SUPPORTED}}"'}
-    - {regexp: '^#? ?SYSFONT', line: 'SYSFONT="{{common_locale.SYSFONT}}"'}
+    create=yes
+    backup=yes
+    regexp='^#? ?LANG'
+    line='LANG="{{common_locale}}"'
+  when: is_centos6
+
+- name: set locale(centos7)
+  lineinfile: >
+    dest=/etc/locale.conf
+    state=present
+    create=yes
+    backup=yes
+    regexp='^#? ?LANG'
+    line='LANG="{{common_locale}}"'
+  when: is_centos7

@@ -1,22 +1,12 @@
 ---
-- name: master config file
-  # 対象hosts
-  hosts:
-    - all
-  # sudo実行の有無
+- name: master playbook
   become: yes
-  # 参照設定値(group_vars->host_varsの順に記述)
+  user: ansible
+  hosts:
+    - dev
   vars_files:
-    - group_vars/pretask_ansible.yml
-    - group_vars/common.yml
-    # - group_vars/fw_iptables.yml
-    # - group_vars/dns_bind.yml
-    # - group_vars/web_apache.yml
-    # - group_vars/web_nginx.yml
-    # - group_vars/app_phpfpm.yml
-    # - group_vars/db_mysql.yml
-    # - host_vars/{{inventory_hostname}}.yml
-  # 実行タスク等
+    -  "{{inventory_dir}}/vars_secure_params.yml"
+    -  "{{inventory_dir}}/all.yml"
   roles:
     - common
     # - fw_iptables

@@ -1,0 +1,8 @@
+- name: set hosts - add nameserver entry
+  lineinfile: >
+    dest=/etc/resolv.conf
+    state=present
+    regexp='^#? ?nameserver *{{item.name}}'
+    line='nameserver {{item.name}}'
+  with_items:
+    - "{{common_name_server}}"
