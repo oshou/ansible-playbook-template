@@ -1,13 +1,15 @@
 ---
 - name: install logwatch packages
-  yum: >
-    name="logwatch"
-    state=installed
+  yum:
+    name: "logwatch"
+    state: installed
+
 - name: copy original logwatch setting
-  copy: >
-    remote_src=true
-    src=/usr/share/logwatch/default.conf/logwatch.conf
-    dest=/etc/logwatch/conf/logwatch.conf
+  copy:
+    remote_src: true
+    src: /usr/share/logwatch/default.conf/logwatch.conf
+    dest: /etc/logwatch/conf/logwatch.conf
+
 - name: set logwatch setting
   lineinfile:
     dest: /etc/logwatch/conf/logwatch.conf

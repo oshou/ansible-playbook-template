@@ -1,8 +1,8 @@
 ---
 - name: set kernel params
-  sysctl: >
-    name="{{item.key}}"
-    value="{{item.val}}"
-    sysctl_set=yes
+  sysctl:
+    name: "{{item.key}}"
+    value: "{{item.val}}"
+    sysctl_set: yes
   with_items:
     - "{{ common_sysctl_conf }}"

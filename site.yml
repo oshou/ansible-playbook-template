@@ -1,7 +1,8 @@
 ---
 - name: master playbook
-  become: yes
   user: ansible
+  become: yes
+  gather_facts: yes
   hosts:
     - dev
   vars_files:

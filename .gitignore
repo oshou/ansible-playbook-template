@@ -1,4 +1,6 @@
 *.swp
 *.swo
 *.retry
+vars_secure_params.yml
+.env
 /ansible.log

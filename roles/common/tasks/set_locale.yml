@@ -1,20 +1,48 @@
 ---
-- name: set locale(centos6)
-  lineinfile: >
-    dest=/etc/sysconfig/i18n
-    state=present
-    create=yes
-    backup=yes
-    regexp='^#? ?LANG'
-    line='LANG="{{common_locale}}"'
+- name: backup initial config files (centos6 .orig)
+  copy:
+    src: "{{ item }}"
+    dest: "{{ item }}.orig"
+    owner: root
+    group: root
+    mode: '0400'
+    remote_src: yes
+    force: no
+    backup: no
+  with_items:
+    - /etc/sysconfig/i18n
   when: is_centos6
 
-- name: set locale(centos7)
-  lineinfile: >
-    dest=/etc/locale.conf
-    state=present
-    create=yes
-    backup=yes
-    regexp='^#? ?LANG'
-    line='LANG="{{common_locale}}"'
+- name: backup initial config files (centos7 .orig)
+  copy:
+    src: "{{ item }}"
+    dest: "{{ item }}.orig"
+    owner: root
+    group: root
+    mode: '0400'
+    remote_src: yes
+    force: no
+    backup: no
+  with_items:
+    - /etc/locale.conf
+  when: is_centos7
+
+- name: set locale (centos6)
+  lineinfile:
+    dest: /etc/sysconfig/i18n
+    state: present
+    create: yes
+    backup: yes
+    regexp: '^#? ?LANG'
+    line: 'LANG="{{common_locale}}"'
+  when: is_centos6
+
+- name: set locale (centos7)
+  lineinfile:
+    dest: /etc/locale.conf
+    state: present
+    create: yes
+    backup: yes
+    regexp: '^#? ?LANG'
+    line: 'LANG="{{common_locale}}"'
   when: is_centos7

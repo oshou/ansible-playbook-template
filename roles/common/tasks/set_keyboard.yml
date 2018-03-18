@@ -1,5 +1,33 @@
 ---
-- name: set keyboard(centos6)
+- name: backup initial config files (cenos6 .orig)
+  copy:
+    src: "{{ item }}"
+    dest: "{{ item }}.orig"
+    owner: root
+    group: root
+    mode: '0400'
+    remote_src: yes
+    force: no
+    backup: no
+  with_items:
+    - /etc/sysconfig/keyboard
+  when: is_centos6
+
+- name: backup initial config files (cenos7 .orig)
+  copy:
+    src: "{{ item }}"
+    dest: "{{ item }}.orig"
+    owner: root
+    group: root
+    mode: '0400'
+    remote_src: yes
+    force: no
+    backup: no
+  with_items:
+    - /etc/vconsole.conf
+  when: is_centos7
+
+- name: set keyboard (centos6)
   lineinfile:
     dest: /etc/sysconfig/keyboard
     regexp: '^(\s*)#?(\s*){{ item.key }}\s*=\s*.+{{ item.end }}\s*$'
@@ -11,7 +39,7 @@
   with_items: "{{ common_keyboard_co6 }}"
   when: is_centos6
 
-- name: set keyboard(centos7) - step1
+- name: set keyboard (centos7) - step1
   lineinfile:
     dest: /etc/vconsole.conf
     regexp: '^(\s*)#?(\s*){{ item.key }}\s*=\s*.+{{ item.end }}\s*$'
@@ -23,14 +51,14 @@
   with_items: "{{ common_keyboard_co7 }}"
   when: is_centos7
 
-- name: set keyboard(centos7) - step2
-  lineinfile: >
-    dest=/etc/X11/xorg.conf.d/00-keyboard.conf
-    state=present
-    create=yes
-    backup=yes
-    regexp="{{item.regexp}}"
-    line="{{item.line}}"
+- name: set keyboard (centos7) - step2
+  lineinfile:
+    dest: /etc/X11/xorg.conf.d/00-keyboard.conf
+    state: present
+    create: yes
+    backup: yes
+    regexp: "{{item.regexp}}"
+    line: "{{item.line}}"
   with_items:
     - {regexp: 'Option "XkbLayout"', line: 'Option "XkbLayout" "{{common_keyboard.XkbLayout}}"'}
   when: is_centos7

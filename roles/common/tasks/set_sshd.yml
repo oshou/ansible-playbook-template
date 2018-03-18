@@ -1,4 +1,17 @@
 ---
+- name: backup initial config files (.orig)
+  copy:
+    src: "{{ item }}"
+    dest: "{{ item }}.orig"
+    owner: root
+    group: root
+    mode: '0400'
+    remote_src: yes
+    force: no
+    backup: no
+  with_items:
+    - /etc/ssh/sshd_config
+
 - name: set sshd
   lineinfile:
     dest: /etc/ssh/sshd_config

@@ -1,4 +1,8 @@
 ---
+is_rhel6: "{{ ansible_os_family == 'RedHat' and ansible_distribution_major_version == '6' }}"
+is_rhel7: "{{ ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7' }}"
+is_centos6: "{{ is_rhel6 }}"
+is_centos7: "{{ is_rhel7 }}"
 common_locale: "ja_JP.UTF-8"
 common_keyboard:
   KEYMAP: "jp106"
@@ -41,6 +45,7 @@ common_packages:
   - name: "htop"
   - name: "iotop"
   - name: "fio"
+  - name: "ncdu"
 common_enable_services:
   - name: "network"
   - name: "sshd"
@@ -68,8 +73,6 @@ common_ntp_server: "ntp.nc.u-tokyo.ac.jp"
 common_name_server:
   - name: "8.8.8.8"
   - name: "8.8.4.4"
-common_log_rotate: "24"
-common_logwatch_send_mail: "adf1985adf@gmail.com"
 common_sysctl_conf:
   # For SYN flood attack
   - {key: 'net.ipv4.tcp_syncookies', val: 1, end: '' }
@@ -101,12 +104,8 @@ common_keyboard_co7:
   - { key: 'KEYMAP', val: '"{{ common_keyboard.KEYMAP }}"', end: '' }
   - { key: 'FONT',   val: '"{{ common_keyboard.FONT }}"',   end: '' }
 common_logwatch_conf:
-  - { key: 'MailTo', val: '"{{ common_logwatch_send_mail }}"', end: '' }
+  - { key: 'MailTo', val: '"{{ lookup( 'env', 'ADMIN_MAIL')}}", end: '' }
   - { key: 'Print',  val: 'No', end: '' }
   - { key: 'mailer', val: '"/usr/sbin/sendmail -t"', end: ''}
 common_sudoers:
   - { key: '%wheel', val: 'ALL=(ALL) ALL', end: '\(ALL\)\s+ALL' }
-is_rhel6: "{{ ansible_os_family == 'RedHat' and ansible_distribution_major_version == '6' }}"
-is_rhel7: "{{ ansible_os_family == 'RedHat' and ansible_distribution_major_version == '7' }}"
-is_centos6: "{{ is_rhel6 }}"
-is_centos7: "{{ is_rhel7 }}"

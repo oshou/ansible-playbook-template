@@ -1,11 +1,25 @@
 ---
-- name: set su(wheel)
-  lineinfile: >
-    dest=/etc/pam.d/su
-    state=present
-    backup=yes
-    regexp='^#? ?auth.*pam_wheel.so use_uid$'
-    line='auth  required  pam_wheel.so use_uid'
+- name: backup initial config files (.orig)
+  copy:
+    src: "{{ item }}"
+    dest: "{{ item }}.orig"
+    owner: root
+    group: root
+    mode: '0400'
+    remote_src: yes
+    force: no
+    backup: no
+  with_items:
+    - /etc/pam.d/su
+    - /etc/sudoers
+
+- name: set su (wheel)
+  lineinfile:
+    dest: /etc/pam.d/su
+    state: present
+    backup: yes
+    regexp: '^#? ?auth.*pam_wheel.so use_uid$'
+    line: 'auth  required  pam_wheel.so use_uid'
 
 - name: set suduers setting
   lineinfile:
@@ -17,10 +31,10 @@
     state: present
   with_items: "{{ common_sudoers }}"
 
-- name: set tty setting(default)
-  lineinfile: >
-    dest=/etc/sudoers
-    state=present
-    backup=yes
-    regexp='^#? ?Defaults *requiretty'
-    line='#Defaults requiretty'
+- name: set tty setting (default)
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    backup: yes
+    regexp: '^#? ?Defaults *requiretty'
+    line: '#Defaults requiretty'

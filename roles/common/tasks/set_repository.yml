@@ -1,8 +1,8 @@
 ---
 - name: install repository
   ignore_errors: true
-  yum: >
-    name="{{item.name}}"
-    state=installed
+  yum:
+    name: "{{item.name}}"
+    state: installed
   with_items:
     - "{{common_repos}}"
